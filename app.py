@@ -11,7 +11,7 @@ Base = automap_base()
 Base.prepare(engine, reflect=True)
 Measurement = Base.classes.measurement
 Station = Base.classes.station
-session = Session(engine)
+
 app = Flask(__name__)
 @app.route("/")
 def welcome():
@@ -47,20 +47,23 @@ def temp_monthly():
 @app.route("/api/v1.0/temp/<start>")
 @app.route("/api/v1.0/temp/<start>/<end>")
 def stats(start=None, end=None):
+    session = Session(engine)
     sel = [func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
 
     if not end:
         results = session.query(*sel).\
             filter(Measurement.date >= start).all()
         temps = list(np.ravel(results))
+        session.close()
         return jsonify(temps)
 
     results = session.query(*sel).\
         filter(Measurement.date >= start).\
         filter(Measurement.date <= end).all()
     temps = list(np.ravel(results))
+    session.close()
     return jsonify(temps)
-    
+
 
  
 
